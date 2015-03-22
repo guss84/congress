@@ -1,0 +1,211 @@
+
+<!DOCTYPE html>
+<html >
+<meta charset="utf-8">
+<title>D3 + Leaflet</title>
+<style>
+
+@import url(//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.2/leaflet.css);
+
+body {
+  font: 12px sans-serif;
+}
+#map {
+  width: 960px;
+  height: 700px;
+}
+
+svg {
+  position: relative;
+}
+
+path {
+  stroke-width: 1px;
+  stroke: #4f4f4f;
+  fill: #999;
+  fill-opacity:0.4;
+  cursor: pointer;
+}
+
+path.q0-9 {
+  fill: #ffffd9;
+}
+
+path.q1-9 {
+  fill: #edf8b1;
+}
+
+path.q2-9 {
+  fill: #7e9b4;
+}
+
+path.q3-9 {
+  fill: #7fcdbb;
+}
+
+path.q4-9 {
+  fill: #41b6c4;
+}
+
+path.q5-9 {
+  fill: #4eb3d3;
+}
+
+path.q6-9 {
+  fill: #1d91c0;
+}
+
+path.q7-9 {
+  fill: #0868ac;
+}
+
+path.q8-9 {
+  fill: #084081;
+}
+
+path:hover {
+  fill: #575757;
+  fill-opacity: .7;
+}
+div.tooltip {
+  position: absolute;
+  background: rgba(207,207,207,0.75);
+  border: 1px solid #ddd;
+  padding: 5px 12px;
+  border-radius: 5px;
+  box-shadow: 2px 2px 2px rgba(120,120,120,0.55);
+  text-shadow: 0 1px 0 #eee;
+}
+
+</style>
+
+
+
+<body>
+
+<p id="map">
+
+
+
+
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.2/leaflet.js"></script>
+
+ <style>
+  @import url(http://cdn.leafletjs.com/leaflet-0.6.1/leaflet.css);
+
+  </style
+  <div id="map" style="width: 960px; height: 600px"></div>
+  <script>
+var map = new L.Map("map", {center: [32.2, -97.1], zoom: 6})
+    .addLayer(new L.TileLayer('http://a.tiles.mapbox.com/v3/examples.c7d2024a/{z}/{x}/{y}.png'));
+
+var svg = d3.select(map.getPanes().overlayPane).append('svg'),
+	g = svg.append('g').attr('class', 'leaflet-zoom-hide');
+var path = d3.geo.path();
+    
+ var color = d3.scale.quantize()
+    .domain([1,36])
+    .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
+    
+	
+	d3.json('congress.topojson', function (collection) {
+		var bounds = d3.geo.bounds(topojson.feature(collection, collection.objects['collection']));
+		var path = d3.geo.path().projection(projectPoint);
+ 
+ 
+		var feature = g.selectAll('.entity')
+	//	var cc=g.properties.CD114FP
+		//console.log(cc)
+			.data(topojson.feature(collection, collection.objects['collection']).features)
+			.enter()
+				.append('path')
+				
+                .attr("g",path)
+				.attr("class", function(g) { return (typeof color(g.properties.CD114FP) == "string" ? color(g.properties.CD114FP) : ""); })
+				.on("mouseover",showTooltip)
+				.on("mousemove",moveTooltip)
+				.on("mouseout",hideTooltip)	
+    
+				
+			;
+		
+				
+			
+ 
+		map.on('viewreset', reset);
+		reset();
+ 
+		// Reposition the SVG to cover the features.
+		function reset() {
+			var bottomLeft = projectPoint(bounds[0]),
+				topRight = projectPoint(bounds[1]);
+ 
+			svg.attr('width', topRight[0] - bottomLeft[0])
+				.attr('height', bottomLeft[1] - topRight[1])
+				.style('margin-left', bottomLeft[0] + 'px')
+				.style('margin-top', topRight[1] + 'px');
+ 
+			var translation = -bottomLeft[0] + ',' + -topRight[1];
+			g.attr('transform', 'translate(' + -bottomLeft[0] + ',' + -topRight[1] + ')');
+			
+			feature.attr('d', path);
+ 
+		}
+		
+		
+		//Position of the tooltip relative to the cursor
+var tooltipOffset = {x: 5, y: -25};
+
+//Create a tooltip, hidden at the start
+function showTooltip(g) {
+  moveTooltip();
+    console.log()
+  tooltip.style("display","block")
+      .html( 
+      '<p><strong> '  + g.properties.NAMELSAD + '</strong></p>' +
+       '<p><strong>UC Paid:</strong> '  + g.properties.UC_Paid + '</p>'+
+       '<p><strong>DSRIP Paid:</strong> ' + g.properties.DSRIP_Paid + '</p>'
+      );
+}
+var tooltip = d3.select("body").append("div").attr("class","tooltip");
+//Move the tooltip to track the mouse
+function moveTooltip() {
+  tooltip.style("top",(d3.event.pageY+tooltipOffset.y)+"px")
+      .style("left",(d3.event.pageX+tooltipOffset.x)+"px");
+}
+
+//Create a tooltip, hidden at the start
+function hideTooltip() {
+  tooltip.style("display","none");
+}
+		
+ 
+		/*
+			Preserve keywords (CUB, COBAN, COBAS, CDC) in uppercase.
+			@return {string}
+		 */
+	/*function toProperCase(str) {
+			
+		/*		return s.charAt(0).toUpperCase() + s.substr(1).toLowerCase();
+			});
+			return pc.replace(/cub|coban|cobas|cdc/i, function (m) {
+				return m.toUpperCase();
+			});
+		};*/
+ 
+		// Use Leaflet to implement a D3 geographic projection.
+		function projectPoint(x) {
+			var point = map.latLngToLayerPoint(new L.LatLng(x[1], x[0]));
+			return [point.x, point.y];
+		}
+	});
+
+      
+
+
+
+</script>
+
